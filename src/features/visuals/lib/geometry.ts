@@ -1,11 +1,11 @@
-import type { Analysis, Scene, Theme } from "../../../shared/types";
+import type { Analysis, Palette, Scene } from "../../../shared/types";
 export function drawScene(
   c: CanvasRenderingContext2D,
   w: number,
   h: number,
   s: Scene,
   a: Analysis,
-  t: Theme,
+  t: Palette,
   phase: number,
   sensitivity: number,
 ) {

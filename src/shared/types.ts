@@ -1,9 +1,15 @@
 export type SceneKind = "orbit" | "spectrum" | "wave" | "tunnel";
+export interface Palette {
+  colors: [string, string, string];
+  background: string;
+}
 export interface Scene {
   id: string;
   name: string;
   kind: SceneKind;
   theme: string;
+  /** Palette saved for this scene when it does not use a preset. */
+  custom?: Palette;
   intensity: number;
   speed: number;
 }
@@ -22,6 +28,8 @@ export interface StageDocument {
   sensitivity: number;
   smoothing: number;
   transition: number;
+  /** Duration of a palette colour morph, in seconds. */
+  paletteTransition: number;
   blackout: boolean;
   frozen: boolean;
   strobe: boolean;

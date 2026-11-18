@@ -1,10 +1,11 @@
 import type { Analysis, Scene, StageDocument } from "../../../shared/types";
-import { getTheme } from "./themes";
 import { drawScene } from "../lib/geometry";
+import { createPaletteBlender, type PaletteStore } from "./palette";
 export function createRenderer(
   canvas: HTMLCanvasElement,
   doc: StageDocument,
   read: () => Analysis,
+  store: PaletteStore,
 ) {
   const c = canvas.getContext("2d")!;
   let raf = 0,
@@ -13,6 +14,7 @@ export function createRenderer(
     current = "",
     previous: Scene | undefined,
     changed = 0;
+  const blender = createPaletteBlender(store);
   const scratch = document.createElement("canvas");
   scratch.width = 1280;
   scratch.height = 720;
@@ -30,10 +32,23 @@ export function createRenderer(
       changed = ms;
     }
     if (!doc.frozen) phase += dt * scene.speed;
-    const a = read(),
-      t = getTheme(scene.theme);
-    drawScene(c, 1280, 720, scene, a, t, phase, doc.sensitivity);
-    const mix = Math.min(1, (ms - changed) / (doc.transition * 1000 || 1));
+    const a = read();
+    // Palette morph and scene cross-fade are independent timelines. Each is
+    // evaluated every frame against the live document, so changing one never
+    // restarts or cancels the other.
+    const morphMs = Math.max(0, doc.paletteTransition ?? 0) * 1000;
+    drawScene(
+      c,
+      1280,
+      720,
+      scene,
+      a,
+      blender.resolve(scene, ms, morphMs),
+      phase,
+      doc.sensitivity,
+    );
+    const span = Math.max(0, doc.transition) * 1000;
+    const mix = span > 0 ? Math.min(1, (ms - changed) / span) : 1;
     if (previous && mix < 1) {
       drawScene(
         sc,
@@ -41,7 +56,7 @@ export function createRenderer(
         720,
         previous,
         a,
-        getTheme(previous.theme),
+        blender.resolve(previous, ms, morphMs),
         phase,
         doc.sensitivity,
       );

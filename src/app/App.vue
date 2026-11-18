@@ -10,7 +10,7 @@ import {
 } from "lucide-vue-next";
 import { createDocument } from "../shared/document";
 import { createAudio, AudioPanel } from "../features/audio";
-import { StageCanvas, ThemePanel } from "../features/visuals";
+import { StageCanvas, ThemePanel, createPalette } from "../features/visuals";
 import { createScenes, ScenePanel, SceneStrip } from "../features/scenes";
 import {
   createControls,
@@ -23,6 +23,7 @@ const doc = createDocument(),
   audio = createAudio(doc),
   scenes = createScenes(doc),
   controls = createControls(doc),
+  palette = createPalette(),
   recorder = createRecorder();
 const canvas = ref<HTMLCanvasElement>(),
   stage = ref<HTMLElement>();
@@ -31,11 +32,15 @@ const unbind = bindShortcuts({
   play: () => {
     void (audio.state.playing ? audio.pause() : audio.play());
   },
-  scene: (i) => scenes.select(doc.scenes[i].id),
+  scene: (i) => sceneBy(i),
   blackout: controls.blackout,
   freeze: controls.freeze,
   tap: controls.tap,
 });
+function sceneBy(i: number) {
+  const scene = doc.scenes[i];
+  if (scene) scenes.select(scene.id);
+}
 function start() {
   if (canvas.value) recorder.start(canvas.value, audio.stream());
 }
@@ -101,6 +106,7 @@ onUnmounted(() => {
             <StageCanvas
               :doc="doc"
               :read="() => audio.frame.value"
+              :palette="palette"
               @ready="canvas = $event"
             />
             <div class="stage-caption">
@@ -117,6 +123,8 @@ onUnmounted(() => {
         <p v-if="fullError" role="alert">{{ fullError }}</p>
         <SceneStrip :doc="doc" @select="scenes.select" /><ThemePanel
           :scene="scenes.active.value"
+          :doc="doc"
+          :palette="palette"
         /><TakeList :recorder="recorder" />
       </div>
       <aside class="right-column">

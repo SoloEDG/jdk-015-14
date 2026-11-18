@@ -41,6 +41,7 @@ export function createDocument(): StageDocument {
     sensitivity: 1.2,
     smoothing: 0.78,
     transition: 1.2,
+    paletteTransition: 1.2,
     blackout: false,
     frozen: false,
     strobe: false,
